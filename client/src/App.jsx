@@ -32,7 +32,6 @@ function App() {
           <div className="nav-links">
             <a href="#features" className="nav-link">Features</a>
             <a href="#how-it-works" className="nav-link">How It Works</a>
-            <a href="#pricing" className="nav-link">Pricing</a>
             <button className="btn-primary">Get Started</button>
           </div>
         </nav>
@@ -53,11 +52,6 @@ function App() {
                 Make a real impact on climate change. Our AI analyzes your daily activities and provides personalized insights to reduce your carbon emissions effortlessly.
               </p>
               <div className="hero-buttons">
-                <button className="btn-cta">
-                  <span>Start Tracking Free</span>
-                  <ArrowRight className="btn-icon" />
-                </button>
-                <button className="btn-secondary">Watch Demo</button>
               </div>
               <div className="hero-stats">
                 <div className="stat">
@@ -193,7 +187,7 @@ function App() {
           </div>
         </section>
 
-        {/* CTA Section */}
+        
         <section className="cta-section">
           <div className="cta-card">
             <div className="cta-content">
@@ -203,14 +197,12 @@ function App() {
               </p>
               <div className="cta-button-wrapper">
                 <button className="btn-cta-large">
-                  <span>Get Started Free</span>
+                  <span>Get Started </span>
                   <ArrowRight className="btn-icon" />
                 </button>
               </div>
               <div className="cta-features">
-                <div className="cta-feature">
-                  <CheckCircle2 className="check-icon" />
-                  <span>No credit card required</span>
+                <div className="cta-feature"> 
                 </div>
                 <div className="cta-feature">
                   <CheckCircle2 className="check-icon" />
