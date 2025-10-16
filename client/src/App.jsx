@@ -4,6 +4,23 @@ import './App.css';
 function App() {
   return (
     <div className="app-container">
+      <div className="leaves-background">
+        {Array.from({ length: 200 }).map((_, i) => (
+          <div
+            key={i}
+            className="leaf"
+            style={{
+              left: `${Math.random() * 100}%`,
+              width: `${10 + Math.random() * 25}px`,
+              height: `${10 + Math.random() * 25}px`,
+              animationDuration: `${10 + Math.random() * 20}s`,
+              animationDelay: `${Math.random() * 5}s`,
+              transform: `rotate(${Math.random() * 360}deg)`
+            }}
+          ></div>
+        ))}
+      </div>
+
       <header className="header">
         <nav className="nav">
           <div className="logo">
@@ -22,6 +39,7 @@ function App() {
       </header>
 
       <main>
+        {/* Hero Section */}
         <section className="hero-section">
           <div className="hero-content">
             <div className="hero-text">
@@ -53,6 +71,7 @@ function App() {
                 </div>
               </div>
             </div>
+
             <div className="hero-card-wrapper">
               <div className="hero-card">
                 <div className="impact-card">
@@ -98,9 +117,11 @@ function App() {
                 </div>
               </div>
             </div>
+
           </div>
         </section>
 
+        {/* Features Section */}
         <section id="features" className="features-section">
           <div className="section-header">
             <h2 className="section-title">Powerful Features for Climate Action</h2>
@@ -139,6 +160,7 @@ function App() {
           </div>
         </section>
 
+        {/* How It Works Section */}
         <section id="how-it-works" className="how-it-works-section">
           <div className="section-header">
             <h2 className="section-title">How It Works</h2>
@@ -171,6 +193,7 @@ function App() {
           </div>
         </section>
 
+        {/* CTA Section */}
         <section className="cta-section">
           <div className="cta-card">
             <div className="cta-content">
