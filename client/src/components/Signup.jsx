@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Leaf, ArrowRight } from 'lucide-react';
+import { Leaf, ArrowRight, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import './Auth.css';
 
@@ -182,6 +182,10 @@ const Signup = () => {
             Already have an account?{' '}
             <Link to="/login" className="auth-link">Sign in</Link>
           </p>
+          <Link to="/" className="back-home-button">
+            <Home className="btn-icon" />
+            <span>Back to Home</span>
+          </Link>
         </div>
       </div>
     </div>
