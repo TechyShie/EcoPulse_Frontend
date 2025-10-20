@@ -1,26 +1,90 @@
-import { Leaf, TrendingDown, Zap, Globe, ArrowRight, CheckCircle2, BarChart3, Smartphone } from 'lucide-react';
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Leaf, TrendingDown, Zap, Globe, ArrowRight, CheckCircle2, BarChart3, Smartphone, X, Mail, Phone, MessageCircle, Users } from 'lucide-react';
+import Login from "./components/Login";
+import Signup from "./components/Signup";
 import './App.css';
 
-function App() {
-  return (
-    <div className="app-container">
-      <div className="leaves-background">
-        {Array.from({ length: 200 }).map((_, i) => (
-          <div
-            key={i}
-            className="leaf"
-            style={{
-              left: `${Math.random() * 100}%`,
-              width: `${10 + Math.random() * 25}px`,
-              height: `${10 + Math.random() * 25}px`,
-              animationDuration: `${10 + Math.random() * 20}s`,
-              animationDelay: `${Math.random() * 5}s`,
-              transform: `rotate(${Math.random() * 360}deg)`
-            }}
-          ></div>
-        ))}
-      </div>
+const ContactModal = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
 
+  const contacts = [
+    {
+      name: "shie",
+      type: "Sales Inquiries",
+      email: "shie@carbonai.com",
+      phone: "+1 (555) 123-4568",
+      description: "Questions about enterprise plans and pricing",
+      icon: <Users className="icon" />,
+      iconClass: "sales"
+    },
+    {
+      name: "Caleb Muindi",
+      type: "Technical Support",
+      email: "Caleb@carbonai.com",
+      phone: "+1 (555) 123-4569",
+      description: "Technical questions and API integration help",
+      icon: <Phone className="icon" />,
+      iconClass: "technical"
+    },
+    {
+      name: "Mwongera Martin",
+      type: "Partnerships",
+      email: "mmuthaura06@gmail.com",
+      phone: "0791312163",
+      description: "Business partnerships and collaboration opportunities",
+      icon: <Mail className="icon" />,
+      iconClass: "partnership"
+    }
+  ];
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose}>
+          <X size={24} />
+        </button>
+        
+        <h2 className="modal-title">Contact Us</h2>
+        <p className="modal-description">
+          Get in touch with our team. We're here to help you on your climate action journey.
+        </p>
+        
+        <div className="contact-list">
+          {contacts.map((contact, index) => (
+            <div key={index} className="contact-item">
+              <div className={`contact-icon ${contact.iconClass}`}>
+                {contact.icon}
+              </div>
+              <div className="contact-details">
+                <div className="contact-name">{contact.name}</div>
+                <div className="contact-type">{contact.type}</div>
+                <a href={`mailto:${contact.email}`} className="contact-email">
+                  {contact.email}
+                </a>
+                <a href={`tel:${contact.phone}`} className="contact-phone">
+                  {contact.phone}
+                </a>
+                <div className="contact-description">{contact.description}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+function HomePage() {
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+
+  return (
+    <>
+      <ContactModal 
+        isOpen={isContactModalOpen} 
+        onClose={() => setIsContactModalOpen(false)} 
+      />
+      
       <header className="header">
         <nav className="nav">
           <div className="logo">
@@ -30,10 +94,10 @@ function App() {
             <span className="logo-text">CarbonAI</span>
           </div>
           <div className="nav-links">
-            <a href="#features" className="nav-link">Features</a>
-            <a href="#how-it-works" className="nav-link">How It Works</a>
-            <a href="#pricing" className="nav-link">Pricing</a>
-            <button className="btn-primary">Get Started</button>
+            <a href="#features" className="nav-link"><b>Features</b></a>
+            <a href="#how-it-works" className="nav-link"><b>How it works</b></a>
+            <a href="/login" className="nav-link"><b>Sign In</b></a>
+            <a href="/signup" className="btn-primary"><b>Get Started</b></a>
           </div>
         </nav>
       </header>
@@ -52,16 +116,9 @@ function App() {
               <p className="hero-description">
                 Make a real impact on climate change. Our AI analyzes your daily activities and provides personalized insights to reduce your carbon emissions effortlessly.
               </p>
-              <div className="hero-buttons">
-                <button className="btn-cta">
-                  <span>Start Tracking Free</span>
-                  <ArrowRight className="btn-icon" />
-                </button>
-                <button className="btn-secondary">Watch Demo</button>
-              </div>
               <div className="hero-stats">
                 <div className="stat">
-                  <div className="stat-number">50K+</div>
+                  <div className="stat-number">50k+</div>
                   <div className="stat-label">Active Users</div>
                 </div>
                 <div className="stat-divider"></div>
@@ -117,11 +174,10 @@ function App() {
                 </div>
               </div>
             </div>
-
           </div>
         </section>
 
-        {/* Features Section */}
+        
         <section id="features" className="features-section">
           <div className="section-header">
             <h2 className="section-title">Powerful Features for Climate Action</h2>
@@ -160,10 +216,10 @@ function App() {
           </div>
         </section>
 
-        {/* How It Works Section */}
+       
         <section id="how-it-works" className="how-it-works-section">
           <div className="section-header">
-            <h2 className="section-title">How It Works</h2>
+            <h2 className="section-title"><b>How It Works</b></h2>
             <p className="section-description">
               Three simple steps to start making a difference
             </p>
@@ -202,23 +258,17 @@ function App() {
                 Join thousands of users taking climate action today. Start tracking your carbon footprint for free.
               </p>
               <div className="cta-button-wrapper">
-                <button className="btn-cta-large">
-                  <span>Get Started Free</span>
+                <a href="/signup" className="btn-cta-large">
+                  <span>Get Started </span>
                   <ArrowRight className="btn-icon" />
-                </button>
+                </a>
               </div>
               <div className="cta-features">
                 <div className="cta-feature">
-                  <CheckCircle2 className="check-icon" />
-                  <span>No credit card required</span>
                 </div>
-                <div className="cta-feature">
-                  <CheckCircle2 className="check-icon" />
-                  <span>Free forever</span>
                 </div>
               </div>
             </div>
-          </div>
         </section>
       </main>
 
@@ -231,16 +281,50 @@ function App() {
             <span className="logo-text">CarbonAI</span>
           </div>
           <div className="footer-links">
-            <a href="#" className="footer-link">Privacy</a>
-            <a href="#" className="footer-link">Terms</a>
-            <a href="#" className="footer-link">Contact</a>
+            <button 
+              className="btn-contact"
+              onClick={() => setIsContactModalOpen(true)}
+            >
+              <b>Contact</b>
+            </button>
           </div>
           <div className="footer-copyright">
             © 2025 CarbonAI. All rights reserved.
           </div>
         </div>
       </footer>
-    </div>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <div className="app-container">
+        <div className="leaves-background">
+          {Array.from({ length: 200 }).map((_, i) => (
+            <div
+              key={i}
+              className="leaf"
+              style={{
+                left: `${Math.random() * 100}%`,
+                width: `${10 + Math.random() * 25}px`,
+                height: `${10 + Math.random() * 25}px`,
+                animationDuration: `${10 + Math.random() * 20}s`,
+                animationDelay: `${Math.random() * 5}s`,
+                transform: `rotate(${Math.random() * 360}deg)`
+              }}
+            ></div>
+          ))}
+        </div>
+
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+        </Routes>
+      </div>
+    </Router>
   );
 }
 
