@@ -4,6 +4,7 @@ import { Leaf, TrendingDown, Zap, Globe, ArrowRight, CheckCircle2, BarChart3, Sm
 import Login from "./components/Login";
 import Signup from "./components/Signup";
 import Dashboard from "./pages/Dashboard";
+import Logs from "./pages/Logs";
 import './App.css';
 
 const ContactModal = ({ isOpen, onClose }) => {
@@ -325,6 +326,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/logs" element={<Logs />} />
         </Routes>
       </div>
     </Router>
