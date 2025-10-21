@@ -1,5 +1,5 @@
 import React from "react";
-import { Activity, Settings, Leaf, BarChart3, Target } from "lucide-react";
+import { Activity, Settings, Leaf, BarChart3, Target, FileText } from "lucide-react";
 
 const Sidebar = () => {
   return (
@@ -39,16 +39,16 @@ const Sidebar = () => {
         </a>
 
         <a
-          href="#"
-          className="group/nav flex items-center gap-4 p-4 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 hover:border-blue-400/40 transition-all duration-300 shadow-lg hover:shadow-blue-400/20"
+          href="/logs"
+          className="group/nav flex items-center gap-4 p-4 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 hover:border-emerald-400/40 transition-all duration-300 shadow-lg hover:shadow-emerald-400/20"
         >
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-400/20 to-indigo-400/20 rounded-xl flex items-center justify-center group-hover/nav:from-blue-400/30 group-hover/nav:to-indigo-400/30 transition-all duration-300 border border-blue-400/20 group-hover/nav:border-blue-400/40 shadow-md group-hover/nav:shadow-blue-400/30">
-            <Activity size={20} className="text-blue-100 group-hover/nav:text-white group-hover/nav:scale-110 transition-all duration-300" />
+          <div className="w-12 h-12 bg-gradient-to-br from-emerald-400/20 to-green-400/20 rounded-xl flex items-center justify-center group-hover/nav:from-emerald-400/30 group-hover/nav:to-green-400/30 transition-all duration-300 border border-emerald-400/20 group-hover/nav:border-emerald-400/40 shadow-md group-hover/nav:shadow-emerald-400/30">
+            <FileText size={20} className="text-emerald-100 group-hover/nav:text-white group-hover/nav:scale-110 transition-all duration-300" />
           </div>
-          <span className="font-semibold text-lg text-white group-hover/nav:text-blue-100 transition-colors duration-300">
-            Activities
+          <span className="font-semibold text-lg text-white group-hover/nav:text-emerald-100 transition-colors duration-300">
+            Logs
           </span>
-          <div className="w-2 h-2 bg-blue-400 rounded-full opacity-60 animate-pulse ml-auto"></div>
+          <div className="w-2 h-2 bg-emerald-400 rounded-full opacity-60 animate-pulse ml-auto"></div>
         </a>
 
         <a
