@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Leaf, TrendingDown, Zap, Globe, ArrowRight, CheckCircle2, BarChart3, Smartphone, X, Mail, Phone, MessageCircle, Users } from 'lucide-react';
 import Login from "./components/Login";
 import Signup from "./components/Signup";
+import Dashboard from "./pages/Dashboard";
 import './App.css';
 
 const ContactModal = ({ isOpen, onClose }) => {
@@ -44,12 +45,12 @@ const ContactModal = ({ isOpen, onClose }) => {
         <button className="modal-close" onClick={onClose}>
           <X size={24} />
         </button>
-        
+
         <h2 className="modal-title">Contact Us</h2>
         <p className="modal-description">
           Get in touch with our team. We're here to help you on your climate action journey.
         </p>
-        
+
         <div className="contact-list">
           {contacts.map((contact, index) => (
             <div key={index} className="contact-item">
@@ -80,9 +81,9 @@ function HomePage() {
 
   return (
     <>
-      <ContactModal 
-        isOpen={isContactModalOpen} 
-        onClose={() => setIsContactModalOpen(false)} 
+      <ContactModal
+        isOpen={isContactModalOpen}
+        onClose={() => setIsContactModalOpen(false)}
       />
       
       <header className="header">
@@ -96,6 +97,7 @@ function HomePage() {
           <div className="nav-links">
             <a href="#features" className="nav-link"><b>Features</b></a>
             <a href="#how-it-works" className="nav-link"><b>How it works</b></a>
+            <a href="/dashboard" className="nav-link"><b>Dashboard</b></a>
             <a href="/login" className="nav-link"><b>Sign In</b></a>
             <a href="/signup" className="btn-primary"><b>Get Started</b></a>
           </div>
@@ -322,6 +324,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/dashboard" element={<Dashboard />} />
         </Routes>
       </div>
     </Router>
