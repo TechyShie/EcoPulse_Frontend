@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState({});
@@ -228,6 +229,39 @@ const Dashboard = () => {
                         </span>
                       </div>
                     ))}
+
+                    {/* View All Logs Link */}
+                    <Link
+                      to="/logs"
+                      style={{
+                        background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '0.5rem',
+                        padding: '0.75rem 1rem',
+                        fontSize: '0.8rem',
+                        fontWeight: 'bold',
+                        textDecoration: 'none',
+                        textAlign: 'center',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        boxShadow: '0 2px 8px rgba(5, 150, 105, 0.3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.5rem'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.transform = 'translateY(-2px)';
+                        e.target.style.boxShadow = '0 4px 15px rgba(5, 150, 105, 0.4)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.transform = 'translateY(0)';
+                        e.target.style.boxShadow = '0 2px 8px rgba(5, 150, 105, 0.3)';
+                      }}
+                    >
+                      📋 View All Logs
+                    </Link>
                   </div>
                 </div>
               )}
