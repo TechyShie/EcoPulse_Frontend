@@ -117,35 +117,40 @@ const Dashboard = () => {
         }
       `}</style>
 
-      {/* LOGOUT BUTTON - Top Right */}
+      {/* LOGOUT BUTTON - Top Right - Black Style */}
       <button
         onClick={handleLogout}
         style={{
           position: 'fixed',
           top: '20px',
           right: '20px',
-          background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+          background: '#111827',
           color: 'white',
-          border: 'none',
+          border: '2px solid #111827',
           padding: '12px 24px',
-          borderRadius: '50px',
+          borderRadius: '12px',
           fontSize: '14px',
           fontWeight: 'bold',
           cursor: 'pointer',
-          boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)',
+          boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)',
           zIndex: 1000,
           transition: 'all 0.3s ease',
           display: 'flex',
           alignItems: 'center',
-          gap: '8px'
+          gap: '8px',
+          fontFamily: 'inherit'
         }}
         onMouseOver={(e) => {
+          e.target.style.background = '#1f2937';
+          e.target.style.border = '2px solid #1f2937';
           e.target.style.transform = 'translateY(-2px)';
-          e.target.style.boxShadow = '0 6px 20px rgba(239, 68, 68, 0.4)';
+          e.target.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.3)';
         }}
         onMouseOut={(e) => {
+          e.target.style.background = '#111827';
+          e.target.style.border = '2px solid #111827';
           e.target.style.transform = 'translateY(0)';
-          e.target.style.boxShadow = '0 4px 15px rgba(239, 68, 68, 0.3)';
+          e.target.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.2)';
         }}
       >
         <span>🚪</span>
