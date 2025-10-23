@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Leaf, TrendingDown, Zap, Globe, ArrowRight, CheckCircle2, BarChart3, Smartphone, X, Mail, Phone, MessageCircle, Users } from 'lucide-react';
 import Login from "./components/Login";
 import Signup from "./components/Signup";
 import Dashboard from "./pages/Dashboard";
 import Logs from "./pages/Logs";
+import Profile from "./pages/Profile";
+import { themeManager } from "./services/userAPI";
 import './App.css';
 
 const ContactModal = ({ isOpen, onClose }) => {
@@ -79,6 +81,20 @@ const ContactModal = ({ isOpen, onClose }) => {
 
 function HomePage() {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Initialize theme on app start
+  useEffect(() => {
+    themeManager.initialize();
+  }, []);
+
+  const toggleContactModal = () => {
+    setIsContactModalOpen(!isContactModalOpen);
+  };
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
 
   return (
     <>
@@ -327,6 +343,7 @@ function App() {
           <Route path="/signup" element={<Signup />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/logs" element={<Logs />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
       </div>
     </Router>

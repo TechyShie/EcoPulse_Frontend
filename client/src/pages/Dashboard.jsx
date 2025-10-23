@@ -118,6 +118,84 @@ const Dashboard = () => {
         zIndex: 200,
         overflowY: 'auto'
       }}>
+        {/* Dashboard Header with Profile Link */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '2rem',
+          padding: '1rem 0'
+        }}>
+          <div style={{ flex: 1 }}></div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            {/* Theme Toggle */}
+            <button
+              onClick={() => {
+                const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+              }}
+              style={{
+                background: 'rgba(255, 255, 255, 0.9)',
+                border: '2px solid rgba(5, 150, 105, 0.6)',
+                borderRadius: '0.75rem',
+                padding: '0.75rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 2px 8px rgba(5, 150, 105, 0.2)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(5, 150, 105, 0.1)';
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 4px 15px rgba(5, 150, 105, 0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'rgba(255, 255, 255, 0.9)';
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 2px 8px rgba(5, 150, 105, 0.2)';
+              }}
+              title="Toggle theme"
+            >
+              {document.documentElement.getAttribute('data-theme') === 'dark' ? '🌞' : '🌙'}
+            </button>
+            <Link
+              to="/profile"
+              style={{
+                background: 'rgba(255, 255, 255, 0.9)',
+                color: '#059669',
+                border: '2px solid rgba(5, 150, 105, 0.6)',
+                borderRadius: '0.75rem',
+                padding: '0.75rem 1.5rem',
+                fontSize: '1rem',
+                fontWeight: 'bold',
+                textDecoration: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 2px 8px rgba(5, 150, 105, 0.2)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'rgba(5, 150, 105, 0.1)';
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 4px 15px rgba(5, 150, 105, 0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'rgba(255, 255, 255, 0.9)';
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '0 2px 8px rgba(5, 150, 105, 0.2)';
+              }}
+            >
+              👤 Profile & Settings
+            </Link>
+          </div>
+        </div>
+
         <h1 style={{
           color: '#111827',
           fontSize: '3rem',
