@@ -1,10 +1,181 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Leaf, TrendingDown, Zap, Globe, ArrowRight, CheckCircle2, BarChart3, Smartphone, X, Mail, Phone, MessageCircle, Users } from 'lucide-react';
+import { Leaf, TrendingDown, Zap, Globe, ArrowRight, BarChart3, Smartphone, X, Mail, Phone, Users, Send, Brain, Sparkles, User } from 'lucide-react';
 import Login from "./components/Login";
 import Signup from "./components/Signup";
 import './App.css';
 
+// EcoMind Chatbot Component - ADD THIS
+const EcoMindChatbot = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState([
+    {
+      id: 1,
+      text: "Hey there! I'm **EcoMind** 🌱, your intelligent sustainability assistant. I can help you understand carbon footprints, suggest eco-friendly habits, and analyze your environmental impact!",
+      sender: 'bot',
+      timestamp: new Date()
+    }
+  ]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim()) return;
+
+    const userMessage = {
+      id: messages.length + 1,
+      text: inputMessage,
+      sender: 'user',
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputMessage('');
+    setIsTyping(true);
+
+    setTimeout(() => {
+      const botResponse = generateAIResponse(inputMessage);
+      setMessages(prev => [...prev, {
+        id: messages.length + 2,
+        text: botResponse,
+        sender: 'bot',
+        timestamp: new Date()
+      }]);
+      setIsTyping(false);
+    }, 1000);
+  };
+
+  const generateAIResponse = (userMessage) => {
+    const message = userMessage.toLowerCase();
+    
+    if (message.includes('carbon') || message.includes('footprint')) {
+      return "Your carbon footprint measures total greenhouse gas emissions from your activities. I can help you track and reduce it through sustainable choices!";
+    }
+    
+    if (message.includes('reduce') || message.includes('lower')) {
+      return "To reduce your footprint: 1) Use public transport 2) Switch to renewable energy 3) Reduce meat consumption 4) Use energy-efficient appliances 5) Support sustainable brands.";
+    }
+    
+    if (message.includes('track') || message.includes('monitor')) {
+      return "CarbonAI automatically tracks emissions through connected services and manual entries. Our AI analyzes patterns to give you detailed insights!";
+    }
+    
+    if (message.includes('feature') || message.includes('app')) {
+      return "CarbonAI offers: Real-time tracking, AI-powered insights, personalized recommendations, progress analytics, and sustainability challenges!";
+    }
+    
+    if (message.includes('transport') || message.includes('travel')) {
+      return "Transportation is a major emissions source. Consider: walking/cycling, public transport, carpooling, or electric vehicles.";
+    }
+    
+    if (message.includes('energy') || message.includes('electric')) {
+      return "For energy savings: Switch to LED bulbs, unplug electronics, use smart thermostats, and consider solar panels.";
+    }
+    
+    if (message.includes('hello') || message.includes('hi')) {
+      return "Hello! I'm EcoMind, your sustainability assistant. How can I help you with carbon footprint questions today?";
+    }
+    
+    return "I specialize in carbon footprints and sustainability. You can ask me about reducing emissions, tracking your impact, or eco-friendly habits!";
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  return (
+    <>
+      <button 
+        className={`echomind-toggle ${isOpen ? 'hidden' : ''}`}
+        onClick={() => setIsOpen(true)}
+      >
+        <Brain className="icon" />
+        <Sparkles className="sparkle-icon" />
+      </button>
+
+      {isOpen && (
+        <div className="echomind-modal">
+          <div className="echomind-header">
+            <div className="echomind-title">
+              <Brain className="icon" />
+              <span>EcoMind Assistant</span>
+            </div>
+            <button 
+              className="echomind-close"
+              onClick={() => setIsOpen(false)}
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className="echomind-messages">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`message ${message.sender === 'bot' ? 'bot-message' : 'user-message'}`}
+              >
+                <div className="message-avatar">
+                  {message.sender === 'bot' ? <Brain size={16} /> : <User size={16} />}
+                </div>
+                <div className="message-content">
+                  <div className="message-text">{message.text}</div>
+                </div>
+              </div>
+            ))}
+            
+            {isTyping && (
+              <div className="message bot-message typing">
+                <div className="message-avatar">
+                  <Brain size={16} />
+                </div>
+                <div className="message-content">
+                  <div className="typing-indicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          <div className="chatbot-input">
+            <input
+              type="text"
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Ask about carbon footprints, sustainability..."
+              className="chatbot-input-field"
+            />
+            <button 
+              onClick={handleSendMessage}
+              disabled={!inputMessage.trim()}
+              className="chatbot-send-btn"
+            >
+              <Send size={18} />
+            </button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+// YOUR EXISTING CODE CONTINUES BELOW - NO CHANGES
 const ContactModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
@@ -84,6 +255,9 @@ function HomePage() {
         isOpen={isContactModalOpen} 
         onClose={() => setIsContactModalOpen(false)} 
       />
+      
+      {/* ADD THE CHATBOT HERE */}
+      <EcoMindChatbot />
       
       <header className="header">
         <nav className="nav">
