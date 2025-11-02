@@ -121,7 +121,7 @@ const Auth = () => {
           {/* Logo and Title */}
           <div className="text-center space-y-2">
             <div className="flex items-center justify-center gap-2 mb-2">
-              <img src="/assets/leaf.svg" alt="Leaf" className="w-8 h-8 text-primary" />
+              <img src="/leaf.svg" alt="Leaf" className="w-8 h-8 text-primary" />
               <span className="text-2xl font-bold">EcoPulse</span>
             </div>
             <p className="text-primary font-medium">

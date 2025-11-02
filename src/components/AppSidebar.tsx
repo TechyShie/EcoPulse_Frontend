@@ -30,7 +30,7 @@ export function AppSidebar() {
       <SidebarContent className="bg-secondary/50">
         {/* Logo */}
         <div className="flex items-center gap-2 p-4">
-          <img src="/assets/leaf.svg" alt="Leaf" className="w-6 h-6" />
+          <img src="/leaf.svg" alt="Leaf" className="w-6 h-6" />
           {!isCollapsed && (
             <span className="font-bold text-lg">EcoPulse</span>
           )}
