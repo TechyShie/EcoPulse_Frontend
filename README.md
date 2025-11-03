@@ -5,7 +5,7 @@ By blending eco-conscious habits with data-driven insights and gamification, Eco
 
 ---
 
-## 🎞️ Presentation Slides
+## 🎞️ Presentation Video
 
 You can view our project overview and demo below:
   
