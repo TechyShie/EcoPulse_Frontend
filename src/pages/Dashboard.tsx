@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, TrendingDown, TrendingUp } from "lucide-react";
+import AddLogDialog from "@/components/AddLogDialog";
 
 interface DashboardStats {
   totalEmissions: number;
@@ -37,33 +38,39 @@ const Dashboard = () => {
   });
   const [activities, setActivities] = useState<Activity[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [userName, setUserName] = useState("User");
   const itemsPerPage = 5;
 
   useEffect(() => {
-    // Placeholder API call
-    fetch("/api/dashboard")
+    // Get user data from localStorage
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      const user = JSON.parse(userData);
+      setUserName(user.name);
+    }
+
+    // Fetch dashboard stats
+    fetch("http://127.0.0.1:8000/api/dashboard/stats")
       .then((res) => res.json())
       .then((data) => setStats(data))
-      .catch(() => {
-        // Fallback to dummy data
+      .catch((error) => {
+        console.error("Error fetching dashboard stats:", error);
+        // Fallback to default values
         setStats({
-          totalEmissions: 1250,
-          ecoScore: 78,
-          weeklyTrend: -5,
+          totalEmissions: 0,
+          ecoScore: 0,
+          weeklyTrend: 0,
         });
       });
 
-    // Dummy activities data
-    setActivities([
-      { id: 1, date: "2025-01-15", description: "Commute to work", category: "Transport", quantity: "25 km", emission: 5.2 },
-      { id: 2, date: "2025-01-15", description: "Lunch delivery", category: "Food", quantity: "1 meal", emission: 2.8 },
-      { id: 3, date: "2025-01-14", description: "Evening drive", category: "Transport", quantity: "15 km", emission: 3.1 },
-      { id: 4, date: "2025-01-14", description: "Online shopping", category: "Shopping", quantity: "1 package", emission: 1.5 },
-      { id: 5, date: "2025-01-13", description: "Flight booking", category: "Transport", quantity: "500 km", emission: 120.0 },
-      { id: 6, date: "2025-01-13", description: "Home energy", category: "Energy", quantity: "45 kWh", emission: 12.3 },
-      { id: 7, date: "2025-01-12", description: "Grocery shopping", category: "Food", quantity: "1 trip", emission: 4.5 },
-      { id: 8, date: "2025-01-12", description: "Gas heating", category: "Energy", quantity: "20 m³", emission: 8.7 },
-    ]);
+    // Fetch activities
+    fetch("http://127.0.0.1:8000/api/activities")
+      .then((res) => res.json())
+      .then((data) => setActivities(data))
+      .catch((error) => {
+        console.error("Error fetching activities:", error);
+        setActivities([]);
+      });
   }, []);
 
   // Pagination logic
@@ -93,7 +100,7 @@ const Dashboard = () => {
           <main className="flex-1 p-6 space-y-8">
             {/* Welcome Banner */}
             <div>
-              <h1 className="text-3xl font-bold mb-2">Welcome back, Alex</h1>
+              <h1 className="text-3xl font-bold mb-2">Welcome back, {userName}</h1>
               <p className="text-muted-foreground">Here's your carbon footprint summary.</p>
             </div>
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,36 +13,49 @@ const Auth = () => {
   const [fullName, setFullName] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("login");
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      // Placeholder login logic
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+      // Mock successful login for testing
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
+
+      // Mock user data based on email (in real app, this would come from backend)
+      const mockUsers: { [key: string]: string } = {
+        "susan@example.com": "Susan",
+        "john@example.com": "John",
+        "alex@example.com": "Alex",
+        "sarah@example.com": "Sarah",
+      };
+
+      const userName = mockUsers[email] || email.split('@')[0]; // Use email prefix if not in mock data
+
+      const userData = {
+        name: userName,
+        email: email,
+      };
+      localStorage.setItem("user", JSON.stringify(userData));
+
+      toast({
+        title: "Login successful",
+        description: "Welcome back to EcoPulse!",
       });
 
-      if (res.ok) {
-        toast({
-          title: "Login successful",
-          description: "Welcome back to EcoPulse!",
-        });
-      } else {
-        toast({
-          title: "Login failed",
-          description: "Please check your credentials and try again.",
-          variant: "destructive",
-        });
-      }
+      // Clear form
+      setEmail("");
+      setPassword("");
+
+      // Navigate to dashboard
+      navigate("/dashboard");
     } catch (error) {
       toast({
         title: "Error",
-        description: "Unable to connect. This is a placeholder - connect Lovable Cloud for real authentication.",
+        description: "An unexpected error occurred.",
         variant: "destructive",
       });
     } finally {
@@ -51,7 +65,7 @@ const Auth = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate passwords match
     if (password !== confirmPassword) {
       toast({
@@ -75,34 +89,33 @@ const Auth = () => {
     setIsLoading(true);
 
     try {
-      // Placeholder signup logic
-      const res = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fullName, email, password })
+      // Mock successful signup for testing
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
+
+      // Store user data in localStorage
+      const userData = {
+        name: fullName,
+        email: email,
+      };
+      localStorage.setItem("user", JSON.stringify(userData));
+
+      toast({
+        title: "Account created",
+        description: "Welcome to EcoPulse!",
       });
 
-      if (res.ok) {
-        toast({
-          title: "Account created",
-          description: "Welcome to EcoPulse!",
-        });
-        // Clear form
-        setFullName("");
-        setEmail("");
-        setPassword("");
-        setConfirmPassword("");
-      } else {
-        toast({
-          title: "Signup failed",
-          description: "Please try again.",
-          variant: "destructive",
-        });
-      }
+      // Clear form
+      setFullName("");
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+
+      // Navigate to login tab
+      setActiveTab("login");
     } catch (error) {
       toast({
         title: "Error",
-        description: "Unable to connect. This is a placeholder - connect Lovable Cloud for real authentication.",
+        description: "An unexpected error occurred.",
         variant: "destructive",
       });
     } finally {
@@ -138,7 +151,7 @@ const Auth = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue="login" className="w-full">
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="login">Log In</TabsTrigger>
                   <TabsTrigger value="signup">Sign Up</TabsTrigger>

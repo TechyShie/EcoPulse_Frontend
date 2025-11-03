@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -23,10 +23,10 @@ const Profile = () => {
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [profile, setProfile] = useState({
-    name: "Alex Rivera",
+    name: "",
     bio: "Passionate about sustainability and reducing my carbon footprint. Making the planet greener, one action at a time! 🌱",
-    points: 1750,
-    level: "Eco Warrior",
+    points: 0,
+    level: "Eco Beginner",
   });
 
   const [formData, setFormData] = useState({
@@ -34,25 +34,37 @@ const Profile = () => {
     bio: profile.bio,
   });
 
+  useEffect(() => {
+    // Load user data from localStorage
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      const user = JSON.parse(userData);
+      setProfile(prev => ({
+        ...prev,
+        name: user.name,
+      }));
+      setFormData(prev => ({
+        ...prev,
+        name: user.name,
+      }));
+    }
+  }, []);
+
   const badges = [
-    { name: "First Steps", icon: Leaf, color: "text-green-500", earned: true },
-    { name: "Water Saver", icon: Droplets, color: "text-blue-500", earned: true },
-    { name: "Energy Hero", icon: Zap, color: "text-yellow-500", earned: true },
+    { name: "First Steps", icon: Leaf, color: "text-green-500", earned: false },
+    { name: "Water Saver", icon: Droplets, color: "text-blue-500", earned: false },
+    { name: "Energy Hero", icon: Zap, color: "text-yellow-500", earned: false },
     { name: "Tree Hugger", icon: TreePine, color: "text-emerald-600", earned: false },
     { name: "Clean Air", icon: Wind, color: "text-cyan-500", earned: false },
-    { name: "Recycle Pro", icon: Recycle, color: "text-green-600", earned: true },
+    { name: "Recycle Pro", icon: Recycle, color: "text-green-600", earned: false },
   ];
 
   const recentLogs = [
-    { activity: "Used reusable bag", date: "2025-10-20", points: 10 },
-    { activity: "Cycled to work", date: "2025-10-21", points: 25 },
-    { activity: "Saved water", date: "2025-10-22", points: 15 },
+    // Empty for new user
   ];
 
   const achievements = [
-    { title: "Week Warrior", description: "Logged activities for 7 consecutive days", date: "Oct 2025" },
-    { title: "Century Club", description: "Earned 100+ eco points", date: "Sep 2025" },
-    { title: "Category Master", description: "Completed activities in all categories", date: "Sep 2025" },
+    // Empty for new user
   ];
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -75,7 +87,7 @@ const Profile = () => {
             <div className="flex h-16 items-center justify-between px-6">
               <SidebarTrigger />
               <Avatar className="h-10 w-10 bg-primary text-primary-foreground">
-                <AvatarFallback>AR</AvatarFallback>
+                <AvatarFallback>{profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
               </Avatar>
             </div>
           </header>
@@ -85,7 +97,7 @@ const Profile = () => {
               <CardContent className="pt-6">
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                   <Avatar className="h-24 w-24 bg-primary text-primary-foreground text-2xl">
-                    <AvatarFallback>AR</AvatarFallback>
+                    <AvatarFallback>{profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 text-center md:text-left">
                     <h1 className="text-3xl font-bold">{profile.name}</h1>

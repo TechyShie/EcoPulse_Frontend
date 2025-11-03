@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -6,26 +7,27 @@ import { LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tool
 import { TrendingUp, Award, Sparkles } from "lucide-react";
 
 const weeklyData = [
-  { day: "Mon", points: 45 },
-  { day: "Tue", points: 52 },
-  { day: "Wed", points: 48 },
-  { day: "Thu", points: 61 },
-  { day: "Fri", points: 55 },
-  { day: "Sat", points: 67 },
-  { day: "Sun", points: 58 },
+  // Empty for new user
 ];
 
 const categoryData = [
-  { name: "Recycling", value: 30 },
-  { name: "Transportation", value: 25 },
-  { name: "Energy", value: 20 },
-  { name: "Conservation", value: 15 },
-  { name: "Food", value: 10 },
+  // Empty for new user
 ];
 
 const COLORS = ["#10b981", "#34d399", "#6ee7b7", "#a7f3d0", "#d1fae5"];
 
 const Insights = () => {
+  const [currentUser, setCurrentUser] = useState<string>("");
+
+  useEffect(() => {
+    // Get current user from localStorage
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      const user = JSON.parse(userData);
+      setCurrentUser(user.name);
+    }
+  }, []);
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -36,7 +38,7 @@ const Insights = () => {
             <div className="flex h-16 items-center justify-between px-6">
               <SidebarTrigger />
               <Avatar className="h-10 w-10 bg-primary text-primary-foreground">
-                <AvatarFallback>AX</AvatarFallback>
+                <AvatarFallback>{currentUser ? currentUser.charAt(0).toUpperCase() : 'U'}</AvatarFallback>
               </Avatar>
             </div>
           </header>
@@ -56,10 +58,10 @@ const Insights = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold text-primary mb-2">
-                  You've reduced your carbon footprint by 23%!
+                  Start your journey by logging your first eco-friendly activity!
                 </p>
                 <p className="text-muted-foreground">
-                  That's equivalent to planting 12 trees or saving 450L of water. Amazing work! 🌱
+                  Every small action counts towards a greener planet. 🌱
                 </p>
               </CardContent>
             </Card>
@@ -71,8 +73,8 @@ const Insights = () => {
                   <TrendingUp className="h-4 w-4 text-primary" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">55 pts</div>
-                  <p className="text-xs text-muted-foreground">+12% from last week</p>
+                  <div className="text-2xl font-bold">0 pts</div>
+                  <p className="text-xs text-muted-foreground">Start logging activities</p>
                 </CardContent>
               </Card>
 
@@ -82,8 +84,8 @@ const Insights = () => {
                   <Award className="h-4 w-4 text-primary" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">Recycling</div>
-                  <p className="text-xs text-muted-foreground">30% of activities</p>
+                  <div className="text-2xl font-bold">None</div>
+                  <p className="text-xs text-muted-foreground">No activities yet</p>
                 </CardContent>
               </Card>
 
@@ -93,8 +95,8 @@ const Insights = () => {
                   <Sparkles className="h-4 w-4 text-primary" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">14 days</div>
-                  <p className="text-xs text-muted-foreground">Keep it going!</p>
+                  <div className="text-2xl font-bold">0 days</div>
+                  <p className="text-xs text-muted-foreground">Begin your streak!</p>
                 </CardContent>
               </Card>
             </div>

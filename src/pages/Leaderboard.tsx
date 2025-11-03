@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -15,16 +16,32 @@ interface LeaderboardUser {
   badge: string;
 }
 
-const leaderboardData: LeaderboardUser[] = [
-  { rank: 1, name: "Sarah Chen", initials: "SC", points: 2450, level: "Planet Pro", badge: "🌟" },
-  { rank: 2, name: "Mike Johnson", initials: "MJ", points: 2180, level: "Green Hero", badge: "🦸" },
-  { rank: 3, name: "Emma Davis", initials: "ED", points: 1920, level: "Green Hero", badge: "🌿" },
-  { rank: 4, name: "Alex Rivera", initials: "AR", points: 1750, level: "Eco Warrior", badge: "⚡" },
-  { rank: 5, name: "Jordan Lee", initials: "JL", points: 1580, level: "Eco Warrior", badge: "🌱" },
-  { rank: 6, name: "Taylor Swift", initials: "TS", points: 1420, level: "Eco Champion", badge: "🏆" },
-  { rank: 7, name: "Chris Park", initials: "CP", points: 1290, level: "Eco Champion", badge: "💚" },
-  { rank: 8, name: "Sam Wilson", initials: "SW", points: 1150, level: "Eco Newbie", badge: "🌸" },
-];
+const getLeaderboardData = (currentUser: string): LeaderboardUser[] => {
+  const baseData: LeaderboardUser[] = [
+    { rank: 1, name: "Sarah Chen", initials: "SC", points: 2450, level: "Planet Pro", badge: "🌟" },
+    { rank: 2, name: "Mike Johnson", initials: "MJ", points: 2180, level: "Green Hero", badge: "🦸" },
+    { rank: 3, name: "Emma Davis", initials: "ED", points: 1920, level: "Green Hero", badge: "🌿" },
+    { rank: 4, name: "Alex Rivera", initials: "AR", points: 1750, level: "Eco Warrior", badge: "⚡" },
+    { rank: 5, name: "Jordan Lee", initials: "JL", points: 1580, level: "Eco Warrior", badge: "🌱" },
+    { rank: 6, name: "Taylor Swift", initials: "TS", points: 1420, level: "Eco Champion", badge: "🏆" },
+    { rank: 7, name: "Chris Park", initials: "CP", points: 1290, level: "Eco Champion", badge: "💚" },
+    { rank: 8, name: "Sam Wilson", initials: "SW", points: 1150, level: "Eco Newbie", badge: "🌸" },
+  ];
+
+  // If current user is not in the list, add them with default points
+  if (currentUser && !baseData.some(user => user.name === currentUser)) {
+    baseData.push({
+      rank: baseData.length + 1,
+      name: currentUser,
+      initials: currentUser.split(' ').map(n => n[0]).join('').toUpperCase(),
+      points: 0,
+      level: "Eco Newbie",
+      badge: "🌱"
+    });
+  }
+
+  return baseData;
+};
 
 const getRankIcon = (rank: number) => {
   switch (rank) {
@@ -40,6 +57,17 @@ const getRankIcon = (rank: number) => {
 };
 
 const Leaderboard = () => {
+  const [currentUser, setCurrentUser] = useState<string>("");
+
+  useEffect(() => {
+    // Get current user from localStorage
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      const user = JSON.parse(userData);
+      setCurrentUser(user.name);
+    }
+  }, []);
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -62,7 +90,7 @@ const Leaderboard = () => {
             </div>
 
             <div className="grid gap-4 md:grid-cols-3 mb-8">
-              {leaderboardData.slice(0, 3).map((user) => (
+              {getLeaderboardData(currentUser).slice(0, 3).map((user) => (
                 <Card
                   key={user.rank}
                   className={`relative overflow-hidden ${
@@ -104,7 +132,7 @@ const Leaderboard = () => {
             <Card>
               <CardContent className="p-6">
                 <div className="space-y-4">
-                  {leaderboardData.map((user) => (
+                  {getLeaderboardData(currentUser).map((user) => (
                     <div
                       key={user.rank}
                       className="flex items-center justify-between p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
