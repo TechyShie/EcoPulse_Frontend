@@ -5,11 +5,11 @@ By blending eco-conscious habits with data-driven insights and gamification, Eco
 
 ---
 
-## 🎞️ Presentation Slides
+## 🎞️ Presentation Video
 
-You can view our project overview and demo on Google Slides below:
+You can view our project overview and demo below:
   
-👉 **[View Here](#)** 
+👉 **[View Here](https://drive.google.com/file/d/1BZtf-8-lHpyWF5RNILl3KWthokvj8oAS/view?usp=drive_link)** 
 
 ---
 ## 💚 Vision Statement
