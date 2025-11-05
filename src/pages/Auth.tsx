@@ -1,63 +1,42 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
+import { api, auth } from "@/utils/api";
 
 const Auth = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("login");
-  const { toast } = useToast();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Login form state
+  const [loginData, setLoginData] = useState({
+    email: "",
+    password: "",
+  });
+
+  // Signup form state
+  const [signupData, setSignupData] = useState({
+    email: "",
+    password: "",
+    confirm_password: "",
+    full_name: "",
+  });
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
 
     try {
-      // Mock successful login for testing
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
-
-      // Mock user data based on email (in real app, this would come from backend)
-      const mockUsers: { [key: string]: string } = {
-        "susan@example.com": "Susan",
-        "john@example.com": "John",
-        "alex@example.com": "Alex",
-        "sarah@example.com": "Sarah",
-      };
-
-      const userName = mockUsers[email] || email.split('@')[0]; // Use email prefix if not in mock data
-
-      const userData = {
-        name: userName,
-        email: email,
-      };
-      localStorage.setItem("user", JSON.stringify(userData));
-
-      toast({
-        title: "Login successful",
-        description: "Welcome back to EcoPulse!",
-      });
-
-      // Clear form
-      setEmail("");
-      setPassword("");
-
-      // Navigate to dashboard
+      const response = await api.auth.login(loginData.email, loginData.password);
+      auth.setAuth(response.access_token, response.user || { email: loginData.email });
       navigate("/dashboard");
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred.",
-        variant: "destructive",
-      });
+    } catch (err: any) {
+      setError(err.message || "Login failed");
     } finally {
       setIsLoading(false);
     }
@@ -65,203 +44,135 @@ const Auth = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validate passwords match
-    if (password !== confirmPassword) {
-      toast({
-        title: "Passwords don't match",
-        description: "Please make sure your passwords match.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate password length
-    if (password.length < 8) {
-      toast({
-        title: "Password too short",
-        description: "Password must be at least 8 characters long.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsLoading(true);
+    setError("");
+
+    if (signupData.password !== signupData.confirm_password) {
+      setError("Passwords do not match");
+      setIsLoading(false);
+      return;
+    }
 
     try {
-      // Mock successful signup for testing
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
-
-      // Store user data in localStorage
-      const userData = {
-        name: fullName,
-        email: email,
-      };
-      localStorage.setItem("user", JSON.stringify(userData));
-
-      toast({
-        title: "Account created",
-        description: "Welcome to EcoPulse!",
-      });
-
-      // Clear form
-      setFullName("");
-      setEmail("");
-      setPassword("");
-      setConfirmPassword("");
-
-      // Navigate to login tab
-      setActiveTab("login");
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred.",
-        variant: "destructive",
-      });
+      const response = await api.auth.signup(
+        signupData.email,
+        signupData.password,
+        signupData.full_name,
+        signupData.confirm_password
+      );
+      // Auto-login after signup
+      const loginResponse = await api.auth.login(signupData.email, signupData.password);
+      auth.setAuth(loginResponse.access_token, response);
+      navigate("/dashboard");
+    } catch (err: any) {
+      setError(err.message || "Signup failed");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Top black bar */}
-      <div className="h-16 bg-foreground" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-blue-50 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold">Welcome to EcoPulse</CardTitle>
+          <CardDescription>
+            Track your carbon footprint and make a difference
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="login" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="login">Login</TabsTrigger>
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="login">
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="login-email">Email</Label>
+                  <Input
+                    id="login-email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={loginData.email}
+                    onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="login-password">Password</Label>
+                  <Input
+                    id="login-password"
+                    type="password"
+                    placeholder="Enter your password"
+                    value={loginData.password}
+                    onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                    required
+                  />
+                </div>
+                {error && <p className="text-sm text-red-500">{error}</p>}
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Signing in..." : "Sign In"}
+                </Button>
+              </form>
+            </TabsContent>
 
-      {/* Main content area */}
-      <div className="flex-1 bg-muted/30 flex items-center justify-center py-12 px-4">
-        <div className="w-full max-w-md space-y-6">
-          {/* Logo and Title */}
-          <div className="text-center space-y-2">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <img src="/leaf.svg" alt="Leaf" className="w-8 h-8 text-primary" />
-              <span className="text-2xl font-bold">EcoPulse</span>
-            </div>
-            <p className="text-primary font-medium">
-              Track your carbon footprint and earn your eco-score
-            </p>
-          </div>
-
-          {/* Auth Card */}
-          <Card className="border-2">
-            <CardHeader>
-              <CardTitle className="text-2xl text-center">Welcome</CardTitle>
-              <CardDescription className="text-center">
-                Sign in to your account or create a new one
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="login">Log In</TabsTrigger>
-                  <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="login">
-                  <form onSubmit={handleLogin} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="login-email">Email</Label>
-                      <Input
-                        id="login-email"
-                        type="email"
-                        placeholder="your@email.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        className="bg-secondary"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="login-password">Password</Label>
-                      <Input
-                        id="login-password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        className="bg-secondary"
-                      />
-                    </div>
-                    <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-                      {isLoading ? "Logging in..." : "Log In"}
-                    </Button>
-                  </form>
-                </TabsContent>
-
-                <TabsContent value="signup">
-                  <form onSubmit={handleSignup} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-name">Full Name</Label>
-                      <Input
-                        id="signup-name"
-                        type="text"
-                        placeholder="John Doe"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        required
-                        className="bg-secondary"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-email">Email Address</Label>
-                      <Input
-                        id="signup-email"
-                        type="email"
-                        placeholder="your@email.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        className="bg-secondary"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-password">Create Password</Label>
-                      <Input
-                        id="signup-password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        minLength={8}
-                        className="bg-secondary"
-                      />
-                      <p className="text-xs text-muted-foreground">Must be at least 8 characters</p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-confirm-password">Confirm Password</Label>
-                      <Input
-                        id="signup-confirm-password"
-                        type="password"
-                        placeholder="••••••••"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        required
-                        minLength={8}
-                        className="bg-secondary"
-                      />
-                    </div>
-                    <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-                      {isLoading ? "Creating account..." : "Create Account"}
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
-            </CardContent>
-          </Card>
-
-          {/* Footer link */}
-          <p className="text-center text-sm text-muted-foreground">
-            <a href="/" className="text-primary hover:underline font-medium">
-              ← Back to home
-            </a>
-          </p>
-        </div>
-      </div>
-
-      {/* Bottom black bar */}
-      <div className="h-16 bg-foreground" />
+            <TabsContent value="signup">
+              <form onSubmit={handleSignup} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signup-name">Full Name</Label>
+                  <Input
+                    id="signup-name"
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={signupData.full_name}
+                    onChange={(e) => setSignupData({ ...signupData, full_name: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email">Email</Label>
+                  <Input
+                    id="signup-email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={signupData.email}
+                    onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password">Password</Label>
+                  <Input
+                    id="signup-password"
+                    type="password"
+                    placeholder="Create a password"
+                    value={signupData.password}
+                    onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-confirm-password">Confirm Password</Label>
+                  <Input
+                    id="signup-confirm-password"
+                    type="password"
+                    placeholder="Confirm your password"
+                    value={signupData.confirm_password}
+                    onChange={(e) => setSignupData({ ...signupData, confirm_password: e.target.value })}
+                    required
+                  />
+                </div>
+                {error && <p className="text-sm text-red-500">{error}</p>}
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Creating account..." : "Create Account"}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 };

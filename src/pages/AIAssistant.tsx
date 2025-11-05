@@ -10,12 +10,13 @@ import { Sparkles, Send, Leaf, ArrowLeft } from "lucide-react";
 import { useAIChat } from "@/hooks/useAIChat";
 import { ChatMessage } from "@/components/ai/ChatMessage";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const quickPrompts = [
+  "How can I reduce my carbon footprint?",
   "Give me eco tips for today",
-  "Summarize my performance this week",
-  "Suggest new eco challenges",
-  "How can I earn more points?",
+  "What are easy ways to save energy at home?",
+  "How can I reduce plastic waste?",
 ];
 
 const AIAssistant = () => {
@@ -23,6 +24,7 @@ const AIAssistant = () => {
   const { messages, isTyping, sendMessage, addContextMessage } = useAIChat();
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -38,22 +40,31 @@ const AIAssistant = () => {
   useEffect(() => {
     if (messages.length === 0) {
       addContextMessage(
-        "Welcome! I'm EcoPulse AI — your personal sustainability buddy! 🌍 I'm here to help you track your eco-friendly habits, answer questions, and motivate you on your green journey. What would you like to know?"
+        "Hello! I'm your EcoPulse AI assistant 🌱\n\nI'm here to help you with:\n• Reducing your carbon footprint\n• Sustainable living tips\n• Eco-friendly product recommendations\n• Energy conservation strategies\n• Waste reduction techniques\n\nWhat would you like to know about sustainable living?"
       );
     }
-  }, []);
+  }, [addContextMessage, messages.length]);
 
   const handleSend = async () => {
     if (!inputValue.trim()) return;
-    await sendMessage(inputValue);
-    setInputValue("");
+    
+    try {
+      await sendMessage(inputValue);
+      setInputValue("");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleQuickPrompt = async (prompt: string) => {
     await sendMessage(prompt);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -77,7 +88,7 @@ const AIAssistant = () => {
                   className="gap-2"
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  Back
+                  Back to Dashboard
                 </Button>
               </div>
               <Avatar className="h-10 w-10 bg-primary text-primary-foreground">
@@ -89,14 +100,14 @@ const AIAssistant = () => {
           <main className="flex-1 p-6 max-w-5xl mx-auto w-full">
             {/* Header Section */}
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-primary to-accent mb-4 animate-pulse">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-primary to-accent mb-4">
                 <Sparkles className="h-10 w-10 text-primary-foreground" />
               </div>
               <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 Eco AI Assistant
               </h1>
               <p className="text-muted-foreground text-lg">
-                Your personal sustainability buddy 🌱
+                Your personal sustainability guide 🌍
               </p>
             </div>
 
@@ -124,18 +135,18 @@ const AIAssistant = () => {
             )}
 
             {/* Chat Panel */}
-            <Card className="shadow-lg">
+            <Card className="shadow-lg border-primary/20">
               <CardContent className="p-0">
                 {/* Messages */}
                 <ScrollArea className="h-[500px] p-6" ref={scrollRef}>
-                  <div className="space-y-2">
+                  <div className="space-y-4">
                     {messages.map((message) => (
                       <ChatMessage key={message.id} message={message} />
                     ))}
                     
                     {isTyping && (
                       <div className="flex gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center animate-pulse">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
                           <Sparkles className="h-5 w-5 text-primary-foreground" />
                         </div>
                         <div className="bg-muted rounded-2xl px-5 py-4">
@@ -157,7 +168,7 @@ const AIAssistant = () => {
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      placeholder="Ask me anything about your sustainability journey..."
+                      placeholder="Ask me anything about sustainability, eco-tips, or your carbon footprint..."
                       className="flex-1 h-12"
                       disabled={isTyping}
                     />
