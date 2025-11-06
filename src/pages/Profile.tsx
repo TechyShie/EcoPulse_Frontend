@@ -23,26 +23,27 @@ import { api, auth } from "@/utils/api";
 interface ProfileData {
   id: number;
   email: string;
+  username: string;
   full_name: string;
   bio?: string;
-  avatar_url?: string;
+  avatar?: string;  // Fixed: changed from avatar_url to avatar
   eco_score: number;
   total_emissions_saved: number;
-  is_active: boolean;
   created_at: string;
+  updated_at: string;
 }
 
 interface BadgeData {
   name: string;
+  description: string;
   icon: string;
-  color: string;
+  earned_at: string | null;
   earned: boolean;
 }
 
 interface AchievementData {
   title: string;
-  description: string;
-  date: string;
+  value: string | number;
 }
 
 const Profile = () => {
@@ -56,6 +57,7 @@ const Profile = () => {
   const [formData, setFormData] = useState({
     full_name: "",
     bio: "",
+    avatar: "",
   });
 
   // Helper functions
@@ -66,118 +68,58 @@ const Profile = () => {
     return "Eco Newbie";
   };
 
-  const getIconFromBadge = (badgeName: string): string => {
-    const iconMap: { [key: string]: string } = {
-      'First Steps': 'leaf',
-      'Water Saver': 'droplets',
-      'Energy Hero': 'zap',
-      'Tree Hugger': 'tree-pine',
-      'Clean Air': 'wind',
-      'Recycle Pro': 'recycle',
-      'Eco Master': 'award',
-      'Climate Hero': 'sparkles',
-      'Green Starter': 'user',
-    };
-    return iconMap[badgeName] || 'award';
-  };
-
-  const getBadgeColor = (badgeName: string): string => {
-    const colorMap: { [key: string]: string } = {
-      'First Steps': 'text-green-500',
-      'Water Saver': 'text-blue-500',
-      'Energy Hero': 'text-yellow-500',
-      'Tree Hugger': 'text-emerald-600',
-      'Clean Air': 'text-cyan-500',
-      'Recycle Pro': 'text-green-600',
-      'Eco Master': 'text-purple-500',
-      'Climate Hero': 'text-orange-500',
-      'Green Starter': 'text-gray-500',
-    };
-    return colorMap[badgeName] || 'text-primary';
-  };
-
   // Fetch profile data
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
         setIsLoading(true);
+        console.log("🔄 Fetching profile data...");
         
         // Fetch main profile data
         const profileResponse = await api.profile.get();
-        console.log('Profile response:', profileResponse);
+        console.log('📊 Profile response:', profileResponse);
         
         if (profileResponse) {
           setProfile(profileResponse);
           setFormData({
             full_name: profileResponse.full_name || "",
             bio: profileResponse.bio || "",
+            avatar: profileResponse.avatar || "",
           });
         }
 
         // Fetch badges
         try {
+          console.log("🔄 Fetching badges...");
           const badgesResponse = await api.profile.badges();
-          console.log('Badges response:', badgesResponse);
+          console.log('🏅 Badges response:', badgesResponse);
           
           if (badgesResponse && badgesResponse.badges) {
-            const formattedBadges = badgesResponse.badges.map((badge: any) => ({
-              name: badge.name || badge.badge?.name || "Unknown Badge",
-              icon: getIconFromBadge(badge.name || badge.badge?.name),
-              color: getBadgeColor(badge.name || badge.badge?.name),
-              earned: true,
-            }));
-            setBadges(formattedBadges);
+            setBadges(badgesResponse.badges);
           } else {
-            // Fallback badges
-            setBadges([
-              { name: "First Steps", icon: "leaf", color: "text-green-500", earned: true },
-              { name: "Recycle Pro", icon: "recycle", color: "text-green-600", earned: true },
-            ]);
+            console.warn('No badges data found in response');
+            setBadges([]);
           }
         } catch (badgeError) {
-          console.warn('Failed to fetch badges:', badgeError);
-          setBadges([
-            { name: "First Steps", icon: "leaf", color: "text-green-500", earned: true },
-            { name: "Recycle Pro", icon: "recycle", color: "text-green-600", earned: true },
-          ]);
+          console.error('Failed to fetch badges:', badgeError);
+          setBadges([]);
         }
 
         // Fetch achievements
         try {
+          console.log("🔄 Fetching achievements...");
           const achievementsResponse = await api.profile.achievements();
-          console.log('Achievements response:', achievementsResponse);
+          console.log('📈 Achievements response:', achievementsResponse);
           
           if (achievementsResponse && achievementsResponse.achievements) {
-            const formattedAchievements = achievementsResponse.achievements.map((achievement: string, index: number) => ({
-              title: achievement,
-              description: getAchievementDescription(achievement),
-              date: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-            }));
-            setAchievements(formattedAchievements);
+            setAchievements(achievementsResponse.achievements);
           } else {
-            // Fallback achievements based on profile data
-            const fallbackAchievements = [];
-            if (profileResponse?.eco_score >= 100) {
-              fallbackAchievements.push({
-                title: "Green Starter",
-                description: "Reached 100 eco points",
-                date: "Current"
-              });
-            }
-            if (profileResponse?.eco_score >= 500) {
-              fallbackAchievements.push({
-                title: "Eco Warrior",
-                description: "Reached 500 eco points",
-                date: "Current"
-              });
-            }
-            setAchievements(fallbackAchievements);
+            console.warn('No achievements data found in response');
+            setAchievements([]);
           }
         } catch (achievementError) {
-          console.warn('Failed to fetch achievements:', achievementError);
-          setAchievements([
-            { title: "Green Starter", description: "Started your eco journey", date: "Current" },
-          ]);
+          console.error('Failed to fetch achievements:', achievementError);
+          setAchievements([]);
         }
 
       } catch (error) {
@@ -198,10 +140,14 @@ const Profile = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      console.log("📝 Updating profile with data:", formData);
       const response = await api.profile.update({
         full_name: formData.full_name,
         bio: formData.bio,
+        avatar: formData.avatar,
       });
+      
+      console.log("✅ Profile update response:", response);
       
       setProfile(prev => prev ? { ...prev, ...response } : response);
       setIsOpen(false);
@@ -219,32 +165,23 @@ const Profile = () => {
     }
   };
 
-  // Icon mapping for badges
-  const getIconComponent = (iconName: string) => {
-    const iconMap: { [key: string]: any } = {
-      leaf: Leaf,
-      droplets: Droplets,
-      zap: Zap,
-      'tree-pine': TreePine,
-      wind: Wind,
-      recycle: Recycle,
-      award: Award,
-      sparkles: Sparkles,
-      user: User,
-    };
-    return iconMap[iconName] || Award;
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
 
-  const getAchievementDescription = (achievement: string): string => {
-    const descriptionMap: { [key: string]: string } = {
-      'Eco Master': 'Reached the highest eco score level',
-      'Climate Hero': 'Saved significant carbon emissions',
-      'Green Starter': 'Started your eco journey',
-      'Eco Warrior': 'Making consistent eco-friendly choices',
-      'Week Warrior': 'Logged activities for 7 consecutive days',
-      'Century Club': 'Earned 100+ eco points',
-    };
-    return descriptionMap[achievement] || 'Great achievement in your sustainability journey';
+  // Get badge icon component
+  const getBadgeIcon = (icon: string) => {
+    // Return the emoji directly since backend provides emoji icons
+    return (
+      <span className="text-2xl" role="img" aria-label="Badge icon">
+        {icon}
+      </span>
+    );
   };
 
   if (isLoading) {
@@ -262,7 +199,10 @@ const Profile = () => {
               </div>
             </header>
             <main className="flex-1 p-6 flex items-center justify-center">
-              <div className="text-center">Loading profile...</div>
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                <p className="mt-4 text-muted-foreground">Loading profile...</p>
+              </div>
             </main>
           </div>
         </div>
@@ -300,7 +240,7 @@ const Profile = () => {
 
   const userInitials = profile.full_name 
     ? profile.full_name.split(' ').map(n => n[0]).join('').toUpperCase()
-    : 'U';
+    : profile.username.charAt(0).toUpperCase();
 
   return (
     <SidebarProvider>
@@ -323,13 +263,18 @@ const Profile = () => {
               <CardContent className="pt-6">
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                   <Avatar className="h-24 w-24 bg-primary text-primary-foreground text-2xl">
-                    <AvatarFallback>{userInitials}</AvatarFallback>
+                    {profile.avatar ? (
+                      <img src={profile.avatar} alt={profile.full_name} />
+                    ) : (
+                      <AvatarFallback>{userInitials}</AvatarFallback>
+                    )}
                   </Avatar>
                   <div className="flex-1 text-center md:text-left">
-                    <h1 className="text-3xl font-bold">{profile.full_name || "User"}</h1>
+                    <h1 className="text-3xl font-bold">{profile.full_name || profile.username}</h1>
                     {profile.email && (
                       <p className="text-muted-foreground">{profile.email}</p>
                     )}
+                    <p className="text-muted-foreground">@{profile.username}</p>
                     <p className="text-muted-foreground mt-2">
                       {profile.bio || "Passionate about sustainability and reducing carbon footprint."}
                     </p>
@@ -341,9 +286,12 @@ const Profile = () => {
                         {profile.eco_score.toLocaleString()} eco points
                       </Badge>
                       <Badge variant="outline" className="text-sm">
-                        {Math.round(profile.total_emissions_saved / 1000)} kg CO₂ saved
+                        {profile.total_emissions_saved.toFixed(1)} kg CO₂ saved
                       </Badge>
                     </div>
+                    <p className="text-xs text-muted-foreground mt-4">
+                      Member since {formatDate(profile.created_at)}
+                    </p>
                   </div>
                   <Dialog open={isOpen} onOpenChange={setIsOpen}>
                     <DialogTrigger asChild>
@@ -367,7 +315,6 @@ const Profile = () => {
                             value={formData.full_name}
                             onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                             placeholder="Enter your full name"
-                            required
                           />
                         </div>
                         <div>
@@ -380,6 +327,15 @@ const Profile = () => {
                             rows={4}
                           />
                         </div>
+                        <div>
+                          <Label htmlFor="avatar">Avatar URL</Label>
+                          <Input
+                            id="avatar"
+                            value={formData.avatar}
+                            onChange={(e) => setFormData({ ...formData, avatar: e.target.value })}
+                            placeholder="https://example.com/avatar.jpg"
+                          />
+                        </div>
                         <Button type="submit" className="w-full">
                           Save Changes
                         </Button>
@@ -390,38 +346,93 @@ const Profile = () => {
               </CardContent>
             </Card>
 
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Eco Score</p>
+                      <p className="text-2xl font-bold">{profile.eco_score}</p>
+                    </div>
+                    <Award className="h-8 w-8 text-primary" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">CO₂ Saved</p>
+                      <p className="text-2xl font-bold text-green-600">
+                        {profile.total_emissions_saved.toFixed(1)} kg
+                      </p>
+                    </div>
+                    <Leaf className="h-8 w-8 text-green-600" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Member Since</p>
+                      <p className="text-lg font-bold">
+                        {formatDate(profile.created_at)}
+                      </p>
+                    </div>
+                    <User className="h-8 w-8 text-blue-600" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
             {/* Badges Section */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Award className="h-5 w-5" />
-                  My Badges
+                  My Badges ({badges.filter(b => b.earned).length}/{badges.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 {badges.length > 0 ? (
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                    {badges.map((badge, index) => {
-                      const IconComponent = getIconComponent(badge.icon);
-                      return (
-                        <div
-                          key={index}
-                          className={`flex flex-col items-center p-4 rounded-lg border-2 ${
-                            badge.earned
-                              ? "bg-secondary/50 border-primary/30"
-                              : "bg-muted/30 border-muted opacity-50"
-                          }`}
-                        >
-                          <IconComponent className={`h-8 w-8 ${badge.color}`} />
-                          <p className="text-xs font-medium mt-2 text-center">{badge.name}</p>
+                    {badges.map((badge, index) => (
+                      <div
+                        key={index}
+                        className={`flex flex-col items-center p-4 rounded-lg border-2 ${
+                          badge.earned
+                            ? "bg-secondary/50 border-primary/30"
+                            : "bg-muted/30 border-muted opacity-50"
+                        }`}
+                      >
+                        <div className="text-2xl mb-2">
+                          {getBadgeIcon(badge.icon)}
                         </div>
-                      );
-                    })}
+                        <p className="text-xs font-medium text-center">{badge.name}</p>
+                        <p className="text-xs text-muted-foreground text-center mt-1">
+                          {badge.description}
+                        </p>
+                        {badge.earned && badge.earned_at && (
+                          <p className="text-xs text-primary mt-2">
+                            Earned {formatDate(badge.earned_at)}
+                          </p>
+                        )}
+                        {!badge.earned && (
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Not earned yet
+                          </p>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <Award className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No badges earned yet</p>
+                    <p>No badges available</p>
                     <p className="text-sm">Complete activities to earn badges!</p>
                   </div>
                 )}
@@ -431,18 +442,21 @@ const Profile = () => {
             {/* Achievements Section */}
             <Card>
               <CardHeader>
-                <CardTitle>Achievements</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5" />
+                  Achievements
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 {achievements.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {achievements.map((achievement, index) => (
-                      <div key={index} className="flex items-start gap-3 p-3 bg-secondary/30 rounded-lg">
-                        <Award className="h-5 w-5 text-primary mt-0.5" />
+                      <div key={index} className="flex items-center justify-between p-4 bg-secondary/30 rounded-lg">
                         <div>
                           <p className="font-medium">{achievement.title}</p>
-                          <p className="text-xs text-muted-foreground">{achievement.description}</p>
-                          <p className="text-xs text-primary mt-1">{achievement.date}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-primary">{achievement.value}</p>
                         </div>
                       </div>
                     ))}
@@ -450,8 +464,7 @@ const Profile = () => {
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <Sparkles className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No achievements yet</p>
-                    <p className="text-sm">Keep going to unlock achievements!</p>
+                    <p>No achievements data available</p>
                   </div>
                 )}
               </CardContent>

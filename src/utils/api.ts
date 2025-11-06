@@ -17,23 +17,72 @@ export const apiRequest = async (endpoint: string, options: RequestInit = {}) =>
     config.body = options.body;
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+  console.log(`🔍 API Call: ${options.method || 'GET'} ${endpoint}`, config.body ? JSON.parse(config.body as string) : '');
 
-  if (response.status === 401) {
-    // Token expired or invalid, clear localStorage and redirect to login
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    window.location.href = "/auth";
-    throw new Error("Unauthorized");
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+
+    console.log(`🔍 API Response: ${response.status} ${endpoint}`);
+
+    if (response.status === 401) {
+      // Token expired or invalid, clear localStorage and redirect to login
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      window.location.href = "/auth";
+      throw new Error("Unauthorized");
+    }
+
+    if (!response.ok) {
+      let errorData;
+      try {
+        errorData = await response.json();
+        console.error(`API Error (${response.status}):`, errorData);
+      } catch {
+        errorData = { detail: response.statusText };
+      }
+
+      // Create a proper error message that shows the actual error details
+      let errorMessage = `API request failed: ${response.statusText}`;
+
+      // Handle array of validation errors (common with 422)
+      if (Array.isArray(errorData.detail)) {
+        errorMessage = errorData.detail.map((err: any) => {
+          if (err.msg) return err.msg;
+          if (err.message) return err.message;
+          if (err.loc && err.msg) return `${err.loc.join('.')}: ${err.msg}`;
+          return JSON.stringify(err);
+        }).join(', ');
+      }
+      // Handle string detail
+      else if (errorData.detail) {
+        errorMessage = errorData.detail;
+      }
+      // Handle message field
+      else if (errorData.message) {
+        errorMessage = errorData.message;
+      }
+      // Handle direct string
+      else if (typeof errorData === 'string') {
+        errorMessage = errorData;
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    // Handle empty responses (like for DELETE)
+    if (response.status === 204 || response.headers.get('content-length') === '0') {
+      return null;
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error(`API Network Error:`, error);
+    if (error instanceof Error) {
+      throw error;
+    } else {
+      throw new Error('Network error occurred');
+    }
   }
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`API Error (${response.status}):`, errorText);
-    throw new Error(`API request failed: ${response.statusText}`);
-  }
-
-  return response.json();
 };
 
 export const api = {
@@ -67,14 +116,15 @@ export const api = {
   },
 
   logs: {
-    get: (skip: number = 0, limit: number = 100) => 
-      apiRequest(`/api/logs/?skip=${skip}&limit=${limit}`),
+    get: (skip: number = 0, limit: number = 100) =>
+      apiRequest(`/api/logs?skip=${skip}&limit=${limit}`),
     create: (logData: {
       activity_type: string;
       description: string;
       emissions_saved: number;
-    }) => 
-      apiRequest("/api/logs/", {
+      points_earned: number;
+    }) =>
+      apiRequest("/api/logs", { // Fixed: removed trailing slash
         method: "POST",
         body: JSON.stringify(logData),
       }),
@@ -82,33 +132,25 @@ export const api = {
       activity_type?: string;
       description?: string;
       emissions_saved?: number;
-    }) => 
+      points_earned?: number;
+    }) =>
       apiRequest(`/api/logs/${logId}`, {
         method: "PUT",
         body: JSON.stringify(logData),
       }),
-    delete: (logId: number) => 
+    delete: (logId: number) =>
       apiRequest(`/api/logs/${logId}`, {
         method: "DELETE",
       }),
   },
 
   ai: {
-    chat: (message: string) =>
+    chat: (prompt: string) => // Fixed: changed 'message' to 'prompt'
       apiRequest("/api/ai/chat", {
         method: "POST",
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ prompt }), // Fixed: changed 'message' to 'prompt'
       }),
-    calculatePoints: (activity: string, category: string, details?: string) =>
-      apiRequest("/api/ai/calculate-points", {
-        method: "POST",
-        body: JSON.stringify({ 
-          activity, 
-          category,
-          details 
-        }),
-      }),
-    testConnection: () => apiRequest("/api/ai/test-connection"),
+    // Removed calculatePoints and testConnection - they don't exist in backend
   },
 
   insights: {
@@ -119,17 +161,17 @@ export const api = {
 
   leaderboard: {
     get: (skip: number = 0, limit: number = 20) => 
-      apiRequest(`/api/leaderboard/?skip=${skip}&limit=${limit}`),
+      apiRequest(`/api/leaderboard?skip=${skip}&limit=${limit}`), // Fixed: removed extra slash
   },
 
   profile: {
-    get: () => apiRequest("/api/profile/"),
+    get: () => apiRequest("/api/profile"),
     update: (profileData: {
       full_name?: string;
       bio?: string;
-      avatar_url?: string;
+      avatar?: string; // Fixed: changed 'avatar_url' to 'avatar'
     }) => 
-      apiRequest("/api/profile/", {
+      apiRequest("/api/profile", { // Fixed: removed extra slash
         method: "PUT",
         body: JSON.stringify(profileData),
       }),

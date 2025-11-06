@@ -13,16 +13,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { TrendingUp, Activity, Award, Leaf } from "lucide-react";
+import { TrendingUp, Activity, Award, Leaf, RefreshCw, AlertCircle } from "lucide-react";
 import AddLogDialog from "@/components/AddLogDialog";
 import { api, auth } from "@/utils/api";
 
 interface DashboardStats {
   total_emissions_saved: number;
   eco_score: number;
-  weekly_emissions_saved: number;
-  weekly_activity_count: number;
-  user_rank: string;
+  weekly_emissions_saved: number;  // Updated to match backend
+  weekly_activity_count: number;   // Updated to match backend
+  user_rank: string;               // Added from backend
 }
 
 interface Activity {
@@ -43,6 +43,7 @@ const Dashboard = () => {
   const [userName, setUserName] = useState("User");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
   const itemsPerPage = 5;
 
   useEffect(() => {
@@ -52,12 +53,6 @@ const Dashboard = () => {
       return;
     }
 
-    // Get user data
-    const user = auth.getUser();
-    if (user) {
-      setUserName(user.full_name || user.email || "User");
-    }
-
     fetchDashboardData();
   }, [navigate]);
 
@@ -65,15 +60,29 @@ const Dashboard = () => {
     try {
       setLoading(true);
       setError("");
+      console.log("🔄 Fetching dashboard data...");
+
+      // Fetch user data first to get the name
+      const userData = await api.auth.me();
+      console.log("👤 User data:", userData);
+      
+      // Set user name
+      if (userData.full_name) {
+        setUserName(userData.full_name);
+      } else if (userData.username) {
+        setUserName(userData.username);
+      } else if (userData.email) {
+        setUserName(userData.email.split('@')[0]);
+      }
 
       // Fetch dashboard stats and activities in parallel
       const [statsData, activitiesData] = await Promise.all([
         api.dashboard.stats(),
-        api.dashboard.activities(0, 10) // Get first 10 activities
+        api.dashboard.activities(0, 10)
       ]);
 
-      console.log("Dashboard stats:", statsData);
-      console.log("Activities data:", activitiesData);
+      console.log("📊 Dashboard stats:", statsData);
+      console.log("📝 Activities data:", activitiesData);
 
       setStats(statsData);
       
@@ -81,33 +90,31 @@ const Dashboard = () => {
       if (Array.isArray(activitiesData)) {
         setActivities(activitiesData);
       } else {
-        console.error("Activities data is not an array:", activitiesData);
+        console.error("❌ Activities data is not an array:", activitiesData);
         setActivities([]);
       }
 
     } catch (err: any) {
-      console.error("Error fetching dashboard data:", err);
-      setError("Failed to load dashboard data");
-      
-      // Set fallback values
-      setStats({
-        total_emissions_saved: 0,
-        eco_score: 0,
-        weekly_emissions_saved: 0,
-        weekly_activity_count: 0,
-        user_rank: "Eco Beginner"
-      });
-      setActivities([]);
+      console.error("❌ Error fetching dashboard data:", err);
+      setError(err.message || "Failed to load dashboard data");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
-  const handleAddLog = (newLog: Activity) => {
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchDashboardData();
+  };
+
+  const handleAddLog = (newLog: any) => {
+    console.log("➕ Adding new log:", newLog);
+    
     // Add new log to the beginning of activities list
     setActivities(prev => [newLog, ...prev]);
     
-    // Update stats optimistically
+    // Update stats optimistically - use the correct field names
     if (stats) {
       setStats(prev => prev ? {
         ...prev,
@@ -121,7 +128,15 @@ const Dashboard = () => {
     // Refresh data to ensure consistency
     setTimeout(() => {
       fetchDashboardData();
-    }, 500);
+    }, 1000);
+  };
+
+  // Calculate user rank based on eco_score
+  const getUserRank = (score: number) => {
+    if (score >= 200) return "Eco Champion";
+    if (score >= 100) return "Eco Warrior";
+    if (score >= 50) return "Eco Enthusiast";
+    return "Eco Beginner";
   };
 
   // Pagination logic
@@ -130,14 +145,21 @@ const Dashboard = () => {
   const currentActivities = activities.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(activities.length / itemsPerPage);
 
-  const formatEmissions = (emissions: number) => {
+  const formatEmissions = (emissions: number | undefined) => {
+    if (emissions === undefined || emissions === null) {
+      return "0";
+    }
     return emissions.toLocaleString(undefined, {
       minimumFractionDigits: 1,
       maximumFractionDigits: 1
     });
   };
 
-  if (loading) {
+  const formatActivityType = (type: string) => {
+    return type.charAt(0).toUpperCase() + type.slice(1);
+  };
+
+  if (loading && !refreshing) {
     return (
       <SidebarProvider>
         <div className="flex min-h-screen w-full">
@@ -174,9 +196,20 @@ const Dashboard = () => {
             <div className="flex h-16 items-center justify-between px-6">
               <SidebarTrigger />
               
-              <Avatar className="h-10 w-10 bg-primary text-primary-foreground">
-                <AvatarFallback>{userName.charAt(0).toUpperCase()}</AvatarFallback>
-              </Avatar>
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRefresh}
+                  disabled={refreshing}
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+                <Avatar className="h-10 w-10 bg-primary text-primary-foreground">
+                  <AvatarFallback>{userName.charAt(0).toUpperCase()}</AvatarFallback>
+                </Avatar>
+              </div>
             </div>
           </header>
 
@@ -186,12 +219,16 @@ const Dashboard = () => {
             <div>
               <h1 className="text-3xl font-bold mb-2">Welcome back, {userName}</h1>
               <p className="text-muted-foreground">
-                {stats ? `You're ranked as ${stats.user_rank}` : "Track your environmental impact"}
+                {stats ? `You're ranked as ${stats.user_rank || getUserRank(stats.eco_score)}` : "Track your environmental impact"}
               </p>
             </div>
 
             {error && (
-              <div className="bg-destructive/15 text-destructive p-4 rounded-lg">
+              <div className="bg-destructive/15 border border-destructive/50 text-destructive p-4 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <span className="font-medium">Error</span>
+                </div>
                 <p>{error}</p>
                 <Button 
                   variant="outline" 
@@ -199,7 +236,7 @@ const Dashboard = () => {
                   className="mt-2"
                   onClick={fetchDashboardData}
                 >
-                  Retry
+                  Try Again
                 </Button>
               </div>
             )}
@@ -235,7 +272,7 @@ const Dashboard = () => {
                     {stats ? stats.eco_score : 0}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Your sustainability score
+                    {stats ? (stats.user_rank || getUserRank(stats.eco_score)) : "Your sustainability score"}
                   </p>
                 </CardContent>
               </Card>
@@ -260,7 +297,7 @@ const Dashboard = () => {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Activities
+                    Weekly Activities
                   </CardTitle>
                   <Activity className="h-4 w-4 text-purple-600" />
                 </CardHeader>
@@ -280,7 +317,9 @@ const Dashboard = () => {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Recent Activities</CardTitle>
-                  <AddLogDialog onAddLog={handleAddLog} />
+                  <div className="flex items-center gap-2">
+                    <AddLogDialog onAddLog={handleAddLog} />
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -288,9 +327,10 @@ const Dashboard = () => {
                   <div className="text-center py-8">
                     <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground mb-4">No activities yet</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground mb-4">
                       Add your first eco-friendly activity to start tracking your impact!
                     </p>
+                    <AddLogDialog onAddLog={handleAddLog} />
                   </div>
                 ) : (
                   <>
@@ -315,7 +355,7 @@ const Dashboard = () => {
                             </TableCell>
                             <TableCell>
                               <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary/10 text-primary capitalize">
-                                {activity.activity_type}
+                                {formatActivityType(activity.activity_type)}
                               </span>
                             </TableCell>
                             <TableCell className="text-right font-medium text-green-600">

@@ -38,17 +38,11 @@ import { api, auth } from "@/utils/api";
 
 interface LeaderboardUser {
   rank: number;
-  user_id: number;
+  username: string;
   full_name: string;
-  avatar_url: string | null;
   eco_score: number;
-  total_emissions_saved: number;
-  is_current_user: boolean;
-}
-
-interface LeaderboardResponse {
-  leaderboard: LeaderboardUser[];
-  current_user_rank: number | null;
+  emissions_saved: number;
+  activity_count?: number; // Optional field from backend
 }
 
 const Leaderboard = () => {
@@ -57,11 +51,8 @@ const Leaderboard = () => {
   const [error, setError] = useState("");
   const [userName, setUserName] = useState("User");
   
-  // Leaderboard data
-  const [leaderboardData, setLeaderboardData] = useState<LeaderboardResponse>({
-    leaderboard: [],
-    current_user_rank: null
-  });
+  // Leaderboard data - now just an array of users
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardUser[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<LeaderboardUser[]>([]);
   
   // Filters
@@ -82,7 +73,7 @@ const Leaderboard = () => {
     // Get user data
     const user = auth.getUser();
     if (user) {
-      setUserName(user.full_name || user.email || "User");
+      setUserName(user.full_name || user.username || user.email || "User");
     }
 
     fetchLeaderboard();
@@ -93,35 +84,48 @@ const Leaderboard = () => {
       setLoading(true);
       setError("");
 
+      console.log("🔄 Fetching leaderboard...");
       const data = await api.leaderboard.get();
-      console.log("Leaderboard data:", data);
+      console.log("📊 Leaderboard data received:", data);
 
-      setLeaderboardData(data);
-      setFilteredUsers(data.leaderboard);
+      // Backend returns array directly, not wrapped in { leaderboard: [] }
+      setLeaderboardData(Array.isArray(data) ? data : []);
+      setFilteredUsers(Array.isArray(data) ? data : []);
 
     } catch (err: any) {
-      console.error("Error fetching leaderboard:", err);
+      console.error("❌ Error fetching leaderboard:", err);
       setError("Failed to load leaderboard");
       
       // Set empty data as fallback
-      setLeaderboardData({
-        leaderboard: [],
-        current_user_rank: null
-      });
+      setLeaderboardData([]);
       setFilteredUsers([]);
     } finally {
       setLoading(false);
     }
   };
 
+  // Get current user's rank
+  const getCurrentUserRank = () => {
+    const currentUser = auth.getUser();
+    if (!currentUser) return null;
+
+    const currentUserEntry = leaderboardData.find(user => 
+      user.username === currentUser.username || 
+      user.full_name === currentUser.full_name
+    );
+    
+    return currentUserEntry ? currentUserEntry.rank : null;
+  };
+
   // Apply filters
   useEffect(() => {
-    let filtered = leaderboardData.leaderboard;
+    let filtered = leaderboardData;
 
     // Apply search filter
     if (searchTerm) {
       filtered = filtered.filter(user =>
-        user.full_name.toLowerCase().includes(searchTerm.toLowerCase())
+        user.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.username.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -135,8 +139,8 @@ const Leaderboard = () => {
           filtered = filtered.filter(user => user.rank <= 50);
           break;
         case "nearby":
-          if (leaderboardData.current_user_rank) {
-            const currentRank = leaderboardData.current_user_rank;
+          const currentRank = getCurrentUserRank();
+          if (currentRank) {
             filtered = filtered.filter(user => 
               user.rank >= Math.max(1, currentRank - 5) && 
               user.rank <= currentRank + 5
@@ -207,11 +211,27 @@ const Leaderboard = () => {
       .slice(0, 2);
   };
 
+  // Check if user is current user
+  const isCurrentUser = (user: LeaderboardUser) => {
+    const currentUser = auth.getUser();
+    return currentUser && (
+      user.username === currentUser.username || 
+      user.full_name === currentUser.full_name
+    );
+  };
+
+  // Calculate total emissions saved
+  const getTotalEmissionsSaved = () => {
+    return leaderboardData.reduce((total, user) => total + user.emissions_saved, 0);
+  };
+
   // Pagination logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentUsers = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+
+  const currentUserRank = getCurrentUserRank();
 
   if (loading) {
     return (
@@ -299,7 +319,7 @@ const Leaderboard = () => {
                   </div>
                   <div>
                     <div className="text-2xl font-bold">
-                      {leaderboardData.leaderboard[0]?.eco_score || 0}
+                      {leaderboardData[0]?.eco_score || 0}
                     </div>
                     <p className="text-sm text-muted-foreground">Top Score</p>
                   </div>
@@ -313,7 +333,7 @@ const Leaderboard = () => {
                   </div>
                   <div>
                     <div className="text-2xl font-bold">
-                      {leaderboardData.leaderboard.length}
+                      {leaderboardData.length}
                     </div>
                     <p className="text-sm text-muted-foreground">Total Players</p>
                   </div>
@@ -327,7 +347,7 @@ const Leaderboard = () => {
                   </div>
                   <div>
                     <div className="text-2xl font-bold">
-                      {leaderboardData.current_user_rank || "-"}
+                      {currentUserRank || "-"}
                     </div>
                     <p className="text-sm text-muted-foreground">Your Rank</p>
                   </div>
@@ -341,7 +361,7 @@ const Leaderboard = () => {
                   </div>
                   <div>
                     <div className="text-2xl font-bold">
-                      {leaderboardData.leaderboard.reduce((total, user) => total + user.total_emissions_saved, 0).toLocaleString()} kg
+                      {getTotalEmissionsSaved().toLocaleString()} kg
                     </div>
                     <p className="text-sm text-muted-foreground">Total CO₂ Saved</p>
                   </div>
@@ -386,9 +406,9 @@ const Leaderboard = () => {
               <CardHeader>
                 <CardTitle>
                   Eco Warriors Ranking ({filteredUsers.length})
-                  {filteredUsers.length !== leaderboardData.leaderboard.length && (
+                  {filteredUsers.length !== leaderboardData.length && (
                     <span className="text-sm font-normal text-muted-foreground ml-2">
-                      (Filtered from {leaderboardData.leaderboard.length})
+                      (Filtered from {leaderboardData.length})
                     </span>
                   )}
                 </CardTitle>
@@ -401,7 +421,7 @@ const Leaderboard = () => {
                   <div className="text-center py-8">
                     <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground">
-                      {leaderboardData.leaderboard.length === 0 
+                      {leaderboardData.length === 0 
                         ? "No users on the leaderboard yet" 
                         : "No users match your filters"
                       }
@@ -422,10 +442,12 @@ const Leaderboard = () => {
                       <TableBody>
                         {currentUsers.map((user) => {
                           const rankBadge = getRankBadge(user.rank);
+                          const currentUser = isCurrentUser(user);
+                          
                           return (
                             <TableRow 
-                              key={user.user_id} 
-                              className={user.is_current_user ? "bg-primary/5 border-l-4 border-l-primary" : ""}
+                              key={`${user.username}-${user.rank}`} 
+                              className={currentUser ? "bg-primary/5 border-l-4 border-l-primary" : ""}
                             >
                               <TableCell className="font-medium">
                                 <div className={`flex items-center gap-2 px-3 py-1 rounded-full border ${rankBadge.bgColor} ${rankBadge.textColor}`}>
@@ -436,22 +458,21 @@ const Leaderboard = () => {
                               <TableCell>
                                 <div className="flex items-center gap-3">
                                   <Avatar className="h-8 w-8">
-                                    <AvatarImage src={user.avatar_url || ""} />
                                     <AvatarFallback className="text-xs">
-                                      {getUserInitials(user.full_name)}
+                                      {getUserInitials(user.full_name || user.username)}
                                     </AvatarFallback>
                                   </Avatar>
                                   <div>
                                     <div className="font-medium flex items-center gap-2">
-                                      {user.full_name}
-                                      {user.is_current_user && (
+                                      {user.full_name || user.username}
+                                      {currentUser && (
                                         <Badge variant="secondary" className="text-xs">
                                           You
                                         </Badge>
                                       )}
                                     </div>
                                     <div className="text-sm text-muted-foreground">
-                                      {rankBadge.label}
+                                      @{user.username}
                                     </div>
                                   </div>
                                 </div>
@@ -462,7 +483,7 @@ const Leaderboard = () => {
                               </TableCell>
                               <TableCell className="text-right">
                                 <div className="font-bold text-green-600">
-                                  {user.total_emissions_saved.toLocaleString()} kg
+                                  {user.emissions_saved.toLocaleString()} kg
                                 </div>
                                 <div className="text-sm text-muted-foreground">CO₂ saved</div>
                               </TableCell>
@@ -517,7 +538,7 @@ const Leaderboard = () => {
             </Card>
 
             {/* Your Ranking Highlight */}
-            {leaderboardData.current_user_rank && (
+            {currentUserRank && (
               <Card className="bg-primary/5 border-primary/20">
                 <CardContent className="p-6">
                   <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -528,13 +549,13 @@ const Leaderboard = () => {
                       <div>
                         <h3 className="font-semibold text-lg">Your Current Rank</h3>
                         <p className="text-muted-foreground">
-                          You're ranked #{leaderboardData.current_user_rank} out of {leaderboardData.leaderboard.length} players
+                          You're ranked #{currentUserRank} out of {leaderboardData.length} players
                         </p>
                       </div>
                     </div>
                     <div className="text-center sm:text-right">
                       <div className="text-2xl font-bold text-primary">
-                        #{leaderboardData.current_user_rank}
+                        #{currentUserRank}
                       </div>
                       <div className="text-sm text-muted-foreground">Global Rank</div>
                     </div>
