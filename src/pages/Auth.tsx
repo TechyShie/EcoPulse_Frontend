@@ -7,6 +7,21 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api, auth } from "@/utils/api";
 
+// Add this validation function
+const validatePassword = (password: string, confirmPassword: string) => {
+  if (password.length > 72) {
+    throw new Error('Password cannot be longer than 72 characters');
+  }
+  
+  if (password !== confirmPassword) {
+    throw new Error('Passwords do not match');
+  }
+  
+  if (password.length < 6) {
+    throw new Error('Password must be at least 6 characters long');
+  }
+};
+
 const Auth = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -42,18 +57,16 @@ const Auth = () => {
     }
   };
 
+  // Updated handleSignup function
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
-    if (signupData.password !== signupData.confirm_password) {
-      setError("Passwords do not match");
-      setIsLoading(false);
-      return;
-    }
-
     try {
+      // Validate password before sending to backend
+      validatePassword(signupData.password, signupData.confirm_password);
+      
       const response = await api.auth.signup(
         signupData.email,
         signupData.password,
@@ -147,10 +160,11 @@ const Auth = () => {
                   <Input
                     id="signup-password"
                     type="password"
-                    placeholder="Create a password"
+                    placeholder="Create a password (max 72 characters)"
                     value={signupData.password}
                     onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
                     required
+                    maxLength={72}
                   />
                 </div>
                 <div className="space-y-2">
@@ -162,6 +176,7 @@ const Auth = () => {
                     value={signupData.confirm_password}
                     onChange={(e) => setSignupData({ ...signupData, confirm_password: e.target.value })}
                     required
+                    maxLength={72}
                   />
                 </div>
                 {error && <p className="text-sm text-red-500">{error}</p>}

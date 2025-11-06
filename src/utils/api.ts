@@ -1,4 +1,5 @@
 const API_BASE_URL = "https://ecopulse-backend-dev.onrender.com";
+
 export const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
   const token = localStorage.getItem("token");
 
@@ -16,7 +17,7 @@ export const apiRequest = async (endpoint: string, options: RequestInit = {}) =>
     config.body = options.body;
   }
 
-  console.log(`🔍 API Call: ${options.method || 'GET'} ${endpoint}`, config.body ? JSON.parse(config.body as string) : '');
+  console.log(`🔍 API Call: ${options.method || 'GET'} ${endpoint}`);
 
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
@@ -24,63 +25,49 @@ export const apiRequest = async (endpoint: string, options: RequestInit = {}) =>
     console.log(`🔍 API Response: ${response.status} ${endpoint}`);
 
     if (response.status === 401) {
-      // Token expired or invalid, clear localStorage and redirect to login
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       window.location.href = "/auth";
-      throw new Error("Unauthorized");
+      throw new Error("Session expired. Please login again.");
     }
 
     if (!response.ok) {
       let errorData;
       try {
         errorData = await response.json();
-        console.error(`API Error (${response.status}):`, errorData);
       } catch {
         errorData = { detail: response.statusText };
       }
 
-      // Create a proper error message that shows the actual error details
-      let errorMessage = `API request failed: ${response.statusText}`;
-
-      // Handle array of validation errors (common with 422)
-      if (Array.isArray(errorData.detail)) {
-        errorMessage = errorData.detail.map((err: any) => {
-          if (err.msg) return err.msg;
-          if (err.message) return err.message;
-          if (err.loc && err.msg) return `${err.loc.join('.')}: ${err.msg}`;
-          return JSON.stringify(err);
-        }).join(', ');
+      // Handle bcrypt password length error specifically
+      if (errorData.detail && errorData.detail.includes('bcrypt') && errorData.detail.includes('72')) {
+        throw new Error("Password is too long. Please use a shorter password.");
       }
-      // Handle string detail
+
+      // Handle other errors
+      let errorMessage = `Request failed: ${response.statusText}`;
+      
+      if (Array.isArray(errorData.detail)) {
+        errorMessage = errorData.detail.map((err: any) => err.msg || err.message).join(', ');
+      }
       else if (errorData.detail) {
         errorMessage = errorData.detail;
       }
-      // Handle message field
       else if (errorData.message) {
         errorMessage = errorData.message;
-      }
-      // Handle direct string
-      else if (typeof errorData === 'string') {
-        errorMessage = errorData;
       }
 
       throw new Error(errorMessage);
     }
 
-    // Handle empty responses (like for DELETE)
-    if (response.status === 204 || response.headers.get('content-length') === '0') {
+    if (response.status === 204) {
       return null;
     }
 
     return response.json();
   } catch (error) {
-    console.error(`API Network Error:`, error);
-    if (error instanceof Error) {
-      throw error;
-    } else {
-      throw new Error('Network error occurred');
-    }
+    console.error(`API Error:`, error);
+    throw error;
   }
 };
 
